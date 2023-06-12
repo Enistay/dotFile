@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
+﻿using dotFile.Helper;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 
 namespace dotFile
 {
     public class StreamFileUploadLocalService : IStreamFileUploadService
     {
-        public async Task<bool> UploadFile(MultipartReader reader, MultipartSection? section)
+        public async Task<string> UploadFile(MultipartReader reader, MultipartSection? section)
         {
+            string stringHash = string.Empty;
+            string filePath = "";
             while (section != null)
             {
                 var hasContentDispositionHeader = ContentDispositionHeaderValue.TryParse(
@@ -19,22 +22,33 @@ namespace dotFile
                     (!string.IsNullOrEmpty(contentDisposition.FileName.Value) ||
                     !string.IsNullOrEmpty(contentDisposition.FileNameStar.Value)))
                     {
-                        string filePath = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "UploadedFiles"));
+                        filePath = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "UploadedFiles"));
+                        if (!Directory.Exists(filePath))
+                        {
+                            Directory.CreateDirectory(filePath);
+                        }
+
                         byte[] fileArray;
                         using (var memoryStream = new MemoryStream())
                         {
                             await section.Body.CopyToAsync(memoryStream);
                             fileArray = memoryStream.ToArray();
                         }
-                        using (var fileStream = System.IO.File.Create(Path.Combine(filePath, contentDisposition.FileName.Value)))
+
+                        stringHash = Sha256Helper.GetHashString(fileArray);
+
+                        if (!System.IO.File.Exists(Path.Combine(filePath, stringHash)))
                         {
-                            await fileStream.WriteAsync(fileArray);
+                            using (var fileStream = System.IO.File.Create(Path.Combine(filePath, stringHash)))
+                            {
+                                await fileStream.WriteAsync(fileArray);
+                            }
                         }
                     }
                 }
                 section = await reader.ReadNextSectionAsync();
             }
-            return true;
+            return stringHash;
         }
     }
 }

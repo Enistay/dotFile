@@ -4,6 +4,6 @@ namespace dotFile
 {
     public interface IStreamFileUploadService
     {
-        Task<bool> UploadFile(MultipartReader reader, MultipartSection section);
+        Task<string> UploadFile(MultipartReader reader, MultipartSection section);
     }
 }

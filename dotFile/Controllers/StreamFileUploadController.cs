@@ -34,9 +34,11 @@ namespace dotFile.Controllers
             string response = string.Empty;
             try
             {
-                if (await _streamFileUploadService.UploadFile(reader, section))
+
+               string shaHash =  await _streamFileUploadService.UploadFile(reader, section);
+                if (!string.IsNullOrEmpty(shaHash))
                 {
-                    ViewBag.Message = "File Upload Successful";
+                    ViewBag.Message = $"File Upload Successful : {shaHash}";
                 }
                 else
                 {
