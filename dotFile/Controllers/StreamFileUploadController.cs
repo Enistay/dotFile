@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using dotFile.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 
@@ -35,7 +36,7 @@ namespace dotFile.Controllers
             try
             {
 
-               string shaHash =  await _streamFileUploadService.UploadFile(reader, section);
+                string shaHash = await _streamFileUploadService.UploadFile(reader, section);
                 if (!string.IsNullOrEmpty(shaHash))
                 {
                     ViewBag.Message = $"File Upload Successful : {shaHash}";
@@ -49,6 +50,25 @@ namespace dotFile.Controllers
             {
                 //Log ex
                 ViewBag.Message = "File Upload Failed";
+            }
+            return View();
+        }
+
+        [ActionName("Download")]
+        public async Task<IActionResult> GetFileFromPhysicalFolder(string hash)
+        {
+            try
+            {
+                FileViewModel file = await _streamFileUploadService.DownloadFile(hash);
+                return File(file.Bytes, 
+                            "application/octet-stream",
+                            $"{file.Name}{file.MimeType}",
+                            enableRangeProcessing: true);
+            }
+            catch (Exception ex)
+            {
+                //Log ex
+                ViewBag.Message = "File Download Failed";
             }
             return View();
         }

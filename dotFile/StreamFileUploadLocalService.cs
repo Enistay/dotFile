@@ -1,4 +1,5 @@
 ﻿using dotFile.Helper;
+using dotFile.Models;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 
@@ -49,6 +50,42 @@ namespace dotFile
                 section = await reader.ReadNextSectionAsync();
             }
             return stringHash;
+        }
+
+        public async Task<FileViewModel> DownloadFile(string fileHash)
+        {
+
+            FileViewModel fileViewModel = new();
+
+            if (string.IsNullOrEmpty(fileHash) || fileHash == null)
+            {
+                return fileViewModel;
+            }
+
+            // get the filePath
+
+            var filePath = Path.GetFullPath(
+                                    Path.Combine(Environment.CurrentDirectory,
+                                                "UploadedFiles",
+                                                fileHash));
+
+            // create a memorystream
+            var memoryStream = new MemoryStream();
+
+            using (var stream = new FileStream(filePath, FileMode.Open))
+            {
+                await stream.CopyToAsync(memoryStream);
+            }
+            // set the position to return the file from
+            memoryStream.Position = 0;
+
+
+            fileViewModel.Bytes = memoryStream.ToArray();
+            fileViewModel.Name = DateTime.Now.ToString();
+            fileViewModel.MimeType = ".pdf";
+
+
+            return fileViewModel;
         }
     }
 }
